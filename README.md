@@ -27,6 +27,14 @@ Before we talk about what the Page Object Model is, let's first discuss the prob
         saved = driver.find_element(MobileBy.ACCESSIBILITY_ID, 'savedMessage').text
         assert saved == 'Hello'
 
+### Problem Code
+<img width="800" src="https://user-images.githubusercontent.com/70295997/225235726-9339ed3b-ae74-47f7-bf12-7cb877bf65df.png">
+<img width="800" src="https://user-images.githubusercontent.com/70295997/225235919-325751b0-4788-4279-9016-bf6bc3c61668.png">
+<img width="800" src="https://user-images.githubusercontent.com/70295997/225236023-49d7d5c9-c6c6-4399-9011-6639630c1bc0.png">
+<img width="800" src="https://user-images.githubusercontent.com/70295997/225236136-4a7ea1f6-1071-4bce-a8ec-1aa09faa35e5.png">
+<img width="800" src="https://user-images.githubusercontent.com/70295997/225236238-d5f7b232-3157-4db1-bf5b-07b98d646481.png">
+
+
 This code is basically a straightforward use of the Appium API, with a couple assertions thrown in, tucked inside a test method so that we can run it with Pytest. But there are a number of ways in which this code can be improved. From a big picture perspective, one big drawback of this code is that it's hard to tell by looking at it what user behavior it's trying to encode. I have to read very closely which UI elements are being interacted with, and then infer the user behavior back out of those interactions. This is a bit backwards! When we think as humans about writing and reading tests, we think first about user behavior on a high level. What is the user attempting to do? We use words like "log in" or "add an item to the shopping cart".
 
 What I'm getting at is that users don't really *intend* to use UI elements. They have to use UI elements because that's how app works, but their goal in using your app is not to tap buttons or enter text. Their goal is to accomplish a certain task, and for better or worse, your UI elements are the ones they have to use to do it. It would be nice if we could somehow write our tests at a level that reflected user intent and user experience, because tests written like that would be extremely transparent in the sense of making it very obvious what they are trying to test.
@@ -39,11 +47,23 @@ There are other kinds of duplication too, like the fact that we have this patter
 
 But thankfully, there's a way to address all these issues by using the Page Object Model. So let's now talk about what it is!
 
+### Defining the Page Object Model
+- **Page** = webpage, specifically the Ul of it. For mobile apps, really means "view".
+- **Object** = encapsulating methods and data for a given page within a code object. In Python this means an instance of a special class representing the page, which becomes the single interface for interacting with that page (or view).
+
 First off, let's talk about what the words mean. What is a "Page Object?" Well in this case, "page" refers to a webpage, and that's because this pattern was established as part of web-based UI testing, before mobile apps were around. So the UIs that we had to deal with were all located on different "pages". I still use this term "page" even though with mobile apps we're not dealing with pages, because "Page Object Model" is the name of the pattern that you'll hear everywhere.
 
 OK, and what about "Object"? This means making a sort of model of a given page as a software object, in other words a Class for the purposes of Python. So the basic idea here is that we construct a model for each page or view, that will have certain responsibilities. Then we will *use* these objects in our test code, which will have other responsibilities.
 
 What are the responsibilities of the page object?
+
+### The Responsibilities of a Page Object
+- Store information about the Ul elements for a given page/view. Prevent anyone else from needing/accessing this information.
+- Expose high-level actions corresponding to the available user behaviors for a page.
+- Example actions for a login page: "log in", "reset password" (*not* "click the login button").
+- Expose high-level information about the state of the page (the kind of information a user might get).
+- Example information for a bank account dashboard: "get account balance".
+- Page objects expose these high-level actions/data as methods and/or properties. E.g., <code>login_page.login(username, password)</code>.
 
 First, the object is responsible for knowing all about the UI elements for a given page or view. In fact, it's not only responsible for knowing all about these, it's responsible for *preventing* anyone else from knowing about them. This is a pattern in software development known as "encapsulation". The idea is that low-level details about UI elements on a specific page are not important to anyone outside the page, so why give access to them?
 
@@ -58,6 +78,11 @@ So, to summarize, the page object model is basically a model where objects expos
 How does a page object expose high-level user actions or data? As methods or properties of a class, of course! And just like any other class methods, these can take parameters. So we can think of a "login" action as actually a method that takes two parameters: a username and a password. Again, when we think of high-level user actions, we are not considering the "how", we're just considering the "what" in an abstract way. A login action conceptually has two pieces of information required to complete it: the username and password. And so these are the parameters that the login method should take.
 
 So given that the page object knows how to implement high-level user actions and expose those actions as methods, what are the responsibilities of the testcases, then?
+
+### The Responsibilities of a Testcase
+- Instantiate and use page objects in order to define high-level user flows. (More or less never referring to Ul elements or even the driver object).
+- Make assertions (explicit or implicit) on the state of the app to prove that things are working as expected.
+- The separation between the Page Object and the Testcase is a very useful separation of concerns, that encourages readability of testcases, reduces duplication, and increases overall organization.
 
 The first responsibility is to instantiate and use page objects in order to construct user flows at a high level. Testcases should *never* need to know about UI elements, or access them directly. In fact, testcases should never, or should rarely, need to use the WebDriver session object at all! The responsibility of the test case is to define a user flow using high-level user actions, and certainly users don't care or know about "drivers".
 
